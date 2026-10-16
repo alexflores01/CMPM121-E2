@@ -5,47 +5,71 @@ const ctx = canvas.getContext("2d")!;
 const readout = document.querySelector<HTMLParagraphElement>(
   "#allocation-readout",
 )!;
-let n = 2;
+const defaultProducerCount = 2;
+let producerCount = defaultProducerCount;
+const maxCrew = 6;
+const producerSupplies = 3;
+const suppliesNeeded = 6;
 
-function u() {
-  const p = n * 3;
-  const c = 6;
-  const b = p - c;
+function redraw() {
+  const production = producerCount * producerSupplies;
+  const consumption = suppliesNeeded;
+  const balance = production - consumption;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (let i = 0; i < 6; i++) {
-    ctx.fillStyle = i < n ? "#27766b" : "#c9d2c9";
+
+  drawCrewTiles(producerCount);
+
+  ctx.fillStyle = "#233e43";
+  ctx.font = "14px system-ui";
+  ctx.fillText(`Producers: ${producerCount} / ${maxCrew}`, 18, 76);
+
+  drawBarLabels("Production", production, "#27766b", 102);
+  drawBarLabels("Consumption", consumption, "#a44d23", 154);
+
+  updateReadout(producerCount, production, consumption, balance);
+}
+
+function drawCrewTiles(assignedCount: number) {
+  for (let i = 0; i < maxCrew; i++) {
+    ctx.fillStyle = i < assignedCount ? "#27766b" : "#c9d2c9";
     ctx.fillRect(18 + i * 45, 16, 36, 36);
-    ctx.fillStyle = i < n ? "#ffffff" : "#233e43";
+    ctx.fillStyle = i < assignedCount ? "#ffffff" : "#233e43";
     ctx.font = "16px system-ui";
     ctx.fillText(String(i + 1), 31 + i * 45, 40);
   }
+}
+
+function drawBarLabels(label: string, value: number, color: string, y: number) {
   ctx.fillStyle = "#233e43";
   ctx.font = "14px system-ui";
-  ctx.fillText(`Producers: ${n} / 6`, 18, 76);
-  ctx.fillText(`Production: ${p}`, 18, 102);
-  ctx.fillStyle = "#27766b";
-  ctx.fillRect(18, 110, p * 14, 20);
-  ctx.fillStyle = "#233e43";
-  ctx.fillText(`Consumption: ${c}`, 18, 154);
-  ctx.fillStyle = "#a44d23";
-  ctx.fillRect(18, 162, c * 14, 20);
+  ctx.fillText(`${label}: ${value}`, 18, y);
+  ctx.fillStyle = color;
+  ctx.fillRect(18, y + 8, value * 14, 20);
+}
+
+function updateReadout(
+  assignedCount: number,
+  production: number,
+  consumption: number,
+  balance: number,
+) {
   readout.textContent =
-    `Assigned: ${n}/6 · Production: ${p} · Consumption: ${c} · Balance: ${
-      b > 0 ? "+" : ""
-    }${b}`;
+    `Assigned: ${assignedCount}/${maxCrew} · Production: ${production} · Consumption: ${consumption} · Balance: ${
+      balance > 0 ? "+" : ""
+    }${balance}`;
 }
 
 document.querySelector<HTMLButtonElement>("#allocation-less")!.onclick = () => {
-  n = Math.max(0, n - 1);
-  u();
+  producerCount = Math.max(0, producerCount - 1);
+  redraw();
 };
 document.querySelector<HTMLButtonElement>("#allocation-more")!.onclick = () => {
-  n = Math.min(6, n + 1);
-  u();
+  producerCount = Math.min(maxCrew, producerCount + 1);
+  redraw();
 };
 document.querySelector<HTMLButtonElement>("#allocation-reset")!.onclick =
   () => {
-    n = 2;
-    u();
+    producerCount = defaultProducerCount;
+    redraw();
   };
-u();
+redraw();
