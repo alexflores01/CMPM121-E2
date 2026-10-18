@@ -10,6 +10,8 @@ let producerCount = defaultProducerCount;
 const maxCrew = 6;
 const producerSupplies = 3;
 const suppliesNeeded = 6;
+const firstRowY = 102;
+const rowGap = 52;
 
 interface shiftResult {
   assignedCount: number;
@@ -25,6 +27,12 @@ function calculateShift(assignedCount: number): shiftResult {
   return { assignedCount, production, consumption, balance };
 }
 
+interface BarRow {
+  label: string;
+  value: number;
+  color: string;
+}
+
 function redraw() {
   const shift = calculateShift(producerCount);
 
@@ -36,8 +44,14 @@ function redraw() {
   ctx.font = "14px system-ui";
   ctx.fillText(`Producers: ${shift.assignedCount} / ${maxCrew}`, 18, 76);
 
-  drawBarLabels("Production", shift.production, "#27766b", 102);
-  drawBarLabels("Consumption", shift.consumption, "#a44d23", 154);
+  const rows: BarRow[] = [
+    { label: "Production", value: shift.production, color: "#27766b" },
+    { label: "Consumption", value: shift.consumption, color: "#a44d23" },
+  ];
+
+  rows.forEach((row, index) => {
+    drawBarLabels(row, firstRowY + index * rowGap);
+  });
 
   updateReadout(shift);
 }
@@ -52,12 +66,12 @@ function drawCrewTiles(assignedCount: number) {
   }
 }
 
-function drawBarLabels(label: string, value: number, color: string, y: number) {
+function drawBarLabels(row: BarRow, y: number) {
   ctx.fillStyle = "#233e43";
   ctx.font = "14px system-ui";
-  ctx.fillText(`${label}: ${value}`, 18, y);
-  ctx.fillStyle = color;
-  ctx.fillRect(18, y + 8, value * 14, 20);
+  ctx.fillText(`${row.label}: ${row.value}`, 18, y);
+  ctx.fillStyle = row.color;
+  ctx.fillRect(18, y + 8, row.value * 14, 20);
 }
 
 function updateReadout(shift: shiftResult) {
