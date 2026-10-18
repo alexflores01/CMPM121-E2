@@ -11,22 +11,35 @@ const maxCrew = 6;
 const producerSupplies = 3;
 const suppliesNeeded = 6;
 
-function redraw() {
-  const production = producerCount * producerSupplies;
+interface shiftResult {
+  assignedCount: number;
+  production: number;
+  consumption: number;
+  balance: number;
+}
+
+function calculateShift(assignedCount: number): shiftResult {
+  const production = assignedCount * producerSupplies;
   const consumption = suppliesNeeded;
   const balance = production - consumption;
+  return { assignedCount, production, consumption, balance };
+}
+
+function redraw() {
+  const shift = calculateShift(producerCount);
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  drawCrewTiles(producerCount);
+  drawCrewTiles(shift.assignedCount);
 
   ctx.fillStyle = "#233e43";
   ctx.font = "14px system-ui";
-  ctx.fillText(`Producers: ${producerCount} / ${maxCrew}`, 18, 76);
+  ctx.fillText(`Producers: ${shift.assignedCount} / ${maxCrew}`, 18, 76);
 
-  drawBarLabels("Production", production, "#27766b", 102);
-  drawBarLabels("Consumption", consumption, "#a44d23", 154);
+  drawBarLabels("Production", shift.production, "#27766b", 102);
+  drawBarLabels("Consumption", shift.consumption, "#a44d23", 154);
 
-  updateReadout(producerCount, production, consumption, balance);
+  updateReadout(shift);
 }
 
 function drawCrewTiles(assignedCount: number) {
@@ -47,16 +60,11 @@ function drawBarLabels(label: string, value: number, color: string, y: number) {
   ctx.fillRect(18, y + 8, value * 14, 20);
 }
 
-function updateReadout(
-  assignedCount: number,
-  production: number,
-  consumption: number,
-  balance: number,
-) {
+function updateReadout(shift: shiftResult) {
   readout.textContent =
-    `Assigned: ${assignedCount}/${maxCrew} · Production: ${production} · Consumption: ${consumption} · Balance: ${
-      balance > 0 ? "+" : ""
-    }${balance}`;
+    `Assigned: ${shift.assignedCount}/${maxCrew} · Production: ${shift.production} · Consumption: ${shift.consumption} · Balance: ${
+      shift.balance > 0 ? "+" : ""
+    }${shift.balance}`;
 }
 
 document.querySelector<HTMLButtonElement>("#allocation-less")!.onclick = () => {
