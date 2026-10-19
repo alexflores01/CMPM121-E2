@@ -74,16 +74,54 @@ const rightCommand: Command = {
   },
 };
 
+const pending: Command[] = [];
+const pendingList = document.querySelector<HTMLOListElement>("#rover-pending")!;
+const queueStatus = document.querySelector<HTMLParagraphElement>(
+  "#rover-queue-status",
+)!;
+
+function renderPending() {
+  pendingList.replaceChildren();
+  for (const command of pending) {
+    const item = document.createElement("li");
+    item.textContent = command.label;
+    pendingList.append(item);
+  }
+  queueStatus.textContent = pending.length === 0
+    ? "Empty"
+    : `${pending.length} pending`;
+}
+
+function runPending() {
+  while (pending.length > 0) {
+    const command = pending.shift()!;
+    run(command);
+  }
+  renderPending();
+}
+
 document.querySelector<HTMLButtonElement>("#rover-forward")!.onclick = () => {
-  run(forwardCommand);
+  pending.push(forwardCommand);
+  renderPending();
 };
 document.querySelector<HTMLButtonElement>("#rover-right")!.onclick = () => {
-  run(rightCommand);
+  pending.push(rightCommand);
+  renderPending();
 };
 document.querySelector<HTMLButtonElement>("#rover-reset")!.onclick = () => {
   x = 2;
   y = 2;
   direction = 0;
+  pending.length = 0;
+  renderPending();
   drawRover();
 };
+document.querySelector<HTMLButtonElement>("#rover-run")!.onclick = () => {
+  runPending();
+};
+document.querySelector<HTMLButtonElement>("#rover-clear")!.onclick = () => {
+  pending.length = 0;
+  renderPending();
+};
 drawRover();
+renderPending();
