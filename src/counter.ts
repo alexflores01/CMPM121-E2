@@ -15,6 +15,7 @@ let panelUpdates = 0;
 const capacity = 10;
 
 const shieldEvents = new EventTarget();
+let inspectorListener: (() => void) | null = null;
 
 interface ShieldSnapshot {
   charge: number;
@@ -39,12 +40,6 @@ function drawMeter(snapshot: ShieldSnapshot) {
     `Shield charge: ${snapshot.charge} / ${snapshot.capacity}`;
 }
 
-function updateStats(snapshot: ShieldSnapshot) {
-  panelUpdates++;
-  diagnostic.textContent = `Inspector deliveries: ${panelUpdates}`;
-  renderStats(snapshot);
-}
-
 function renderStats(snapshot: ShieldSnapshot) {
   if (!panel) return;
   panel.textContent =
@@ -56,7 +51,6 @@ function setCount(next: number) {
   if (bounded === count) return;
   count = bounded;
   shieldEvents.dispatchEvent(new Event("shield-changed"));
-  if (panel) updateStats(takeSnapshot(count));
 }
 
 shieldEvents.addEventListener("shield-changed", () => {
@@ -77,9 +71,18 @@ document.querySelector<HTMLButtonElement>("#counter-open")!.onclick = () => {
   panel = document.createElement("p");
   host.append(panel);
   renderStats(takeSnapshot(count));
+
+  inspectorListener = () => {
+    panelUpdates++;
+    diagnostic.textContent = `Inspector deliveries: ${panelUpdates}`;
+    renderStats(takeSnapshot(count));
+  };
+  shieldEvents.addEventListener("shield-changed", inspectorListener);
 };
 document.querySelector<HTMLButtonElement>("#counter-close")!.onclick = () => {
-  if (!panel) return;
+  if (!panel || !inspectorListener) return;
+  shieldEvents.removeEventListener("shield-changed", inspectorListener);
+  inspectorListener = null;
   panel.remove();
   panel = null;
 };
